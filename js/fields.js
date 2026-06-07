@@ -44,6 +44,7 @@ export function generateRandom() {
     roadEdge,
     riverEdge,
     notchCorner: rndInt(0, nv - 1),
+    notchT:      rnd(0.14, 0.22),
     gateT:       rnd(0.25, 0.72),
     _generated:  true,
   };
@@ -61,7 +62,9 @@ export function buildPoly(def, W, H) {
   const nc   = def.notchCorner % n;
   const prev = (nc - 1 + n) % n;
   const next = (nc + 1) % n;
-  const t    = rnd(0.14, 0.22);
+  // Use a fixed notch fraction stored on def (set once at generation time).
+  // Falls back to 0.18 for named fields that don't specify one.
+  const t = def.notchT || 0.18;
 
   const p1 = {
     x: scaled[nc].x + (scaled[prev].x - scaled[nc].x) * t,
@@ -71,9 +74,10 @@ export function buildPoly(def, W, H) {
     x: scaled[nc].x + (scaled[next].x - scaled[nc].x) * t,
     y: scaled[nc].y + (scaled[next].y - scaled[nc].y) * t,
   };
+  // pm exactly on bisector — no jitter, stable across redraws
   const pm = {
-    x: (p1.x + p2.x) / 2 + rnd(-3, 3),
-    y: (p1.y + p2.y) / 2 + rnd(-3, 3),
+    x: (p1.x + p2.x) / 2,
+    y: (p1.y + p2.y) / 2,
   };
 
   const poly = [];
