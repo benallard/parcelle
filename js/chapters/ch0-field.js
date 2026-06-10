@@ -19,12 +19,36 @@ function thumbSVG(def) {
   const poly  = buildPoly(def, W, H);
   const pts   = poly.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const nOrig = def.verts.length;
-  const roadA = poly[def.roadEdge % nOrig];
-  const roadB = poly[(def.roadEdge + 1) % nOrig];
-  const rivA  = poly[def.riverEdge % nOrig];
-  const rivB  = poly[(def.riverEdge + 1) % nOrig];
-  const gx    = lerp(roadA.x, roadB.x, def.gateT).toFixed(1);
-  const gy    = lerp(roadA.y, roadB.y, def.gateT).toFixed(1);
+  const plen  = poly.length;
+
+  // Walk the edge loop exactly as render.js does — same logic, same indices.
+  // For each orig edge, record the a/b endpoints actually used for drawing.
+  let pi = 0;
+  let roadA = null, roadB = null, rivA = null, rivB = null;
+
+  for (let i = 0; i < nOrig; i++) {
+    const isNotch = def.notchCorner >= 0 && (i === def.notchCorner % nOrig);
+    const span    = isNotch ? 3 : 1;
+    const isRoad  = i === (def.roadEdge  % nOrig);
+    const isRiver = i === (def.riverEdge % nOrig);
+
+    if (isNotch) {
+      const p1  = poly[pi];
+      const p2  = poly[(pi + 2) % plen];
+      if (isRoad)  { roadA = p1; roadB = p2; }
+      if (isRiver) { rivA  = p1; rivB  = p2; }
+    } else {
+      const a = poly[pi];
+      const b = poly[(pi + span) % plen];
+      if (isRoad)  { roadA = a; roadB = b; }
+      if (isRiver) { rivA  = a; rivB  = b; }
+    }
+
+    pi = (pi + span) % plen;
+  }
+
+  const gx = lerp(roadA.x, roadB.x, def.gateT).toFixed(1);
+  const gy = lerp(roadA.y, roadB.y, def.gateT).toFixed(1);
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <polygon points="${pts}"

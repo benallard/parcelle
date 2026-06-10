@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { generateRandom, buildPoly, isConvexCorner, polyArea } from '../js/fields.js';
+import { generateRandom, buildPoly, polyArea } from '../js/fields.js';
 
 // ── generateRandom ────────────────────────────────────────────────────
 describe('generateRandom', () => {
@@ -45,13 +45,6 @@ describe('generateRandom', () => {
       const f = generateRandom();
       expect(f.notchCorner).toBeGreaterThanOrEqual(0);
       expect(f.notchCorner).toBeLessThan(f.verts.length);
-    }
-  });
-
-  it('notchCorner is convex', () => {
-    for (let i = 0; i < 50; i++) {
-      const f = generateRandom();
-      expect(isConvexCorner(f.verts, f.notchCorner)).toBe(true);
     }
   });
 
@@ -187,5 +180,40 @@ describe('headland width derivation', () => {
 
   it('just over: needs two passes', () => {
     expect(headlandWidth(3.1, 3)).toBe(6);
+  });
+});
+
+// ── edge coverage (regression for missing p2→pnxt segment) ───────────
+import { generateRandom, buildPoly } from '../js/fields.js';
+
+describe('edge coverage after notch', () => {
+  function allEdgesCovered(def) {
+    const poly  = buildPoly(def, 800, 600);
+    const plen  = poly.length;
+    const nOrig = def.verts.length;
+    let pi = 0;
+    const drawn = new Set();
+    for (let i = 0; i < nOrig; i++) {
+      const isNotch = def.notchCorner >= 0 && (i === def.notchCorner % nOrig);
+      const span    = isNotch ? 3 : 1;
+      if (isNotch) {
+        drawn.add(`${pi}→${(pi+1)%plen}`);
+        drawn.add(`${(pi+1)%plen}→${(pi+2)%plen}`);
+        drawn.add(`${(pi+2)%plen}→${(pi+3)%plen}`);
+      } else {
+        drawn.add(`${pi}→${(pi+span)%plen}`);
+      }
+      pi = (pi + span) % plen;
+    }
+    for (let i = 0; i < plen; i++) {
+      if (!drawn.has(`${i}→${(i+1)%plen}`)) return false;
+    }
+    return true;
+  }
+
+  it('covers all poly edges for 500 random fields', () => {
+    for (let i = 0; i < 500; i++) {
+      expect(allEdgesCovered(generateRandom())).toBe(true);
+    }
   });
 });

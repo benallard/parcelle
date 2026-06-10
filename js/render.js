@@ -180,28 +180,65 @@ export function renderField(def) {
     const isNotch = def.notchCorner >= 0 && (i === def.notchCorner % nOrig);
     const span    = isNotch ? 3 : 1;
 
-    const a = poly[pi];
-    const b = poly[(pi + span) % poly.length];
-
     const isRoad  = i === (def.roadEdge  % nOrig);
     const isRiver = i === (def.riverEdge % nOrig);
 
-    if (isRiver) {
-      drawRiver(a, b);
-    } else if (isRoad) {
-      drawRoad(a, b);
-      const gate = drawGate(a, b, def.gateT);
-      if (gate) tractorGate = gate;
+    if (isNotch) {
+      // Notch replaces corner C with three poly points: p1, p1r, p2.
+      // p1 and p2 are on the two edges adjacent to C.
+      // p1r is the inner rectangle corner (the garden interior).
+      //
+      // Segments to draw:
+      //   outer: prev_poly_point → p1  (handled by previous iteration)
+      //   notch side 1: p1 → p1r      (always hedge)
+      //   notch side 2: p1r → p2      (always hedge)
+      //   outer: p2 → next_poly_point (handled by NEXT iteration)
+      //          BUT if this is the last orig edge, next iteration
+      //          doesn't exist — we must draw p2→poly[0] ourselves.
+      //
+      // Road/river on this orig edge runs p1→p2 (outer span, not through house).
+      const p1   = poly[pi];
+      const p1r  = poly[(pi + 1) % poly.length];
+      const p2   = poly[(pi + 2) % poly.length];
+      const pnxt = poly[(pi + 3) % poly.length]; // first point of next edge
+
+      // Two rectangular notch sides (always hedge)
+      drawHedge(p1, p1r);
+      drawHedge(p1r, p2);
+
+      // p2 → pnxt: the segment connecting the notch back to the main polygon.
+      // This is NEVER drawn by the next iteration (which starts at pnxt),
+      // so we must draw it here.
+      drawHedge(p2, pnxt);
+
+      // Outer boundary type on this orig edge: road or river runs
+      // along p1→p2 (the straight outer boundary, not through house).
+      if (isRoad) {
+        drawRoad(p1, p2);
+        const gate = drawGate(p1, p2, def.gateT);
+        if (gate) tractorGate = gate;
+      }
+      // River coinciding with notch: skip — makes no geographic sense.
     } else {
-      drawHedge(a, b);
+      const a = poly[pi];
+      const b = poly[(pi + span) % poly.length];
+      if (isRiver) {
+        drawRiver(a, b);
+      } else if (isRoad) {
+        drawRoad(a, b);
+        const gate = drawGate(a, b, def.gateT);
+        if (gate) tractorGate = gate;
+      } else {
+        drawHedge(a, b);
+      }
     }
 
     pi = (pi + span) % poly.length;
   }
 
   // ── Farmhouse ────────────────────────────────────────────────────────
-  // Position: the notch corner vertex, scaled to canvas.
-  // This is inside the field — the notch cut goes toward it.
+  // Place at the original corner vertex (C) — which is now inside the
+  // rectangular notch recess, outside the workable field.
   if (def.notchCorner >= 0) {
     const nc = def.notchCorner % nOrig;
     const fx = def.verts[nc].x * W;
