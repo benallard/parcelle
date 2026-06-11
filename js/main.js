@@ -63,8 +63,35 @@ async function init() {
   // 6. Listen for chapter transitions
   state.on('fieldSelected', def => {
     console.log('[main] field selected:', def.name);
+    updateDebugPane(def);
     // Future: unlock chapter 1 (machine selection)
   });
+
+  // 7. Setup debug pane
+  setupDebugPane();
+}
+
+// ── DEBUG PANE ─────────────────────────────────────────────────────────
+function setupDebugPane() {
+  const toggleBtn = document.getElementById('debug-toggle');
+  const debugPane = document.getElementById('debug-pane');
+
+  toggleBtn.addEventListener('click', () => {
+    toggleBtn.classList.toggle('active');
+    debugPane.classList.toggle('visible');
+  });
+
+  // Initial population with current field
+  if (state.currentField) {
+    updateDebugPane(state.currentField);
+  }
+}
+
+function updateDebugPane(fieldDef) {
+  const content = document.getElementById('debug-content');
+  if (content && fieldDef) {
+    content.textContent = JSON.stringify(fieldDef, null, 2);
+  }
 }
 
 // ── RESIZE ────────────────────────────────────────────────────────────
