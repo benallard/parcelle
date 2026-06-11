@@ -85,14 +85,16 @@ export function buildSelector() {
     const div = document.createElement('div');
     div.className = 'field-thumb' + (key === _activeKey ? ' active' : '');
     div.innerHTML = `
-      ${key === 'random' ? '<span class="refresh-btn" title="New random field">↺</span>' : ''}
+      ${key === 'random' ? '<button type="button" class="refresh-btn" title="New random field"><span class="refresh-icon">↺</span></button>' : ''}
       ${thumbSVG(def)}
       <div class="thumb-label">${def.name}</div>
       <div class="thumb-desc">${def.desc}</div>
     `;
 
     div.addEventListener('click', e => {
-      if (e.target.classList.contains('refresh-btn')) {
+      const refresh = e.target.closest('.refresh-btn');
+      if (refresh) {
+        e.preventDefault();
         _state.randomField = generateRandom();
         buildSelector();
         if (_activeKey === 'random') switchField('random');
