@@ -35,14 +35,21 @@ export function generateRandom() {
   const roadEdge  = rndInt(0, nv - 1);
   const riverEdge = (roadEdge + rndInt(2, Math.max(2, Math.floor(nv / 2)))) % nv;
 
+  const excludedCorners = new Set([roadEdge, riverEdge]);
+  const availableCorners = [];
+  for (let i = 0; i < nv; i++) {
+    if (!excludedCorners.has(i)) availableCorners.push(i);
+  }
+  const notchCorner = availableCorners[rndInt(0, availableCorners.length - 1)];
+
   return {
     name:        'Random',
     desc:        'Never quite the same.',
     verts,
     roadEdge,
     riverEdge,
-    notchCorner: rndInt(0, nv - 1),
-    notchT:      rnd(0.22, 0.32),
+    notchCorner,
+    notchT:      rnd(0.22, 0.82),
     gateT:       rnd(0.25, 0.72),
     _generated:  true,
   };

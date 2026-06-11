@@ -48,6 +48,20 @@ describe('generateRandom', () => {
     }
   });
 
+  it('notchCorner differs from roadEdge', () => {
+    for (let i = 0; i < 100; i++) {
+      const f = generateRandom();
+      expect(f.notchCorner).not.toBe(f.roadEdge);
+    }
+  });
+
+  it('notchCorner differs from riverEdge', () => {
+    for (let i = 0; i < 100; i++) {
+      const f = generateRandom();
+      expect(f.notchCorner).not.toBe(f.riverEdge);
+    }
+  });
+
   it('gateT is within [0,1]', () => {
     for (let i = 0; i < 50; i++) {
       const f = generateRandom();

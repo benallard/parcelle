@@ -212,10 +212,11 @@ export function renderField(def) {
       drawHedge(p2, pnxt);
 
       // Outer boundary type on this orig edge: road or river runs
-      // along p1→p2 (the straight outer boundary, not through house).
+      // along the actual outer boundary segment p2→pnxt, not the notch
+      // harness segment p1→p2 which crosses the garden recess.
       if (isRoad) {
-        drawRoad(p1, p2);
-        const gate = drawGate(p1, p2, def.gateT);
+        drawRoad(p2, pnxt);
+        const gate = drawGate(p2, pnxt, def.gateT);
         if (gate) tractorGate = gate;
       }
       // River coinciding with notch: skip — makes no geographic sense.
